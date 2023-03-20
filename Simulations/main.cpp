@@ -20,8 +20,8 @@ using namespace GamePhysics;
 
 //#define ADAPTIVESTEP
 
-#define TEMPLATE_DEMO
-//#define MASS_SPRING_SYSTEM
+//#define TEMPLATE_DEMO
+#define MASS_SPRING_SYSTEM
 //#define RIGID_BODY_SYSTEM
 //#define SPH_SYSTEM
 
@@ -51,7 +51,6 @@ bool  g_bSimulateByStep = false;
 bool firstTime = true;
 // Video recorder
 FFmpeg* g_pFFmpegVideoRecorder = nullptr;
-
 
 void initTweakBar(){
 	g_pDUC->g_pTweakBar = TwNewBar("TweakBar");

@@ -8,7 +8,6 @@
 #define MIDPOINT 2
 // Do Not Change
 
-
 class MassSpringSystemSimulator:public Simulator{
 public:
 	// Construtors
@@ -36,11 +35,19 @@ public:
 	Vec3 getPositionOfMassPoint(int index);
 	Vec3 getVelocityOfMassPoint(int index);
 	void applyExternalForce(Vec3 force);
+	void AdvanceEuler();
+	void AdvanceLeapFrog();
+	void AdvanceMidPoint();
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
 		m_iIntegrator = integrator;
 	}
+
+	// Specific Functions
+	void drawSomeRandomObjects();
+	void drawMovableTeapot();
+	void drawTriangle();
 
 private:
 	// Data Attributes
@@ -54,5 +61,31 @@ private:
 	Point2D m_mouse;
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;
+
+	// Attributes
+	Vec3  m_vfMovableObjectPos;
+	Vec3  m_vfMovableObjectFinalPos;
+	Vec3  m_vfRotate;
+	int   m_iNumSpheres;
+	float m_fSphereSize;
+
 };
+
+class Spring{
+public:
+	int point1;
+	int point2;
+	float stiffness;
+	float initialLength;
+	float currentLength;
+};
+
+class Point {
+public:
+	Vec3 position;
+	Vec3 velocity;
+	Vec3 force;
+	float mass;
+};
+
 #endif
