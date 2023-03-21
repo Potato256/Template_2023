@@ -21,12 +21,13 @@ public:
 
 class Point {
 public:
-	Point(Vec3 p, Vec3 v, float m): 
-		position(p), velocity(v), force(Vec3(0,0,0)), mass(m) {}
+	Point(Vec3 p, Vec3 v, float m, bool fix): 
+		position(p), velocity(v), force(Vec3(0,0,0)), mass(m), fixed(fix) {}
 	Vec3 position;
 	Vec3 velocity;
 	Vec3 force;
 	float mass;
+	bool fixed;
 };
 
 class MassSpringSystemSimulator:public Simulator{
@@ -51,41 +52,41 @@ public:
 	void setStiffness(float stiffness);
 	void setDampingFactor(float damping);
 	int addMassPoint(Vec3 position, Vec3 Velocity, bool isFixed);
+	int addMassPoint(Vec3 position, Vec3 Velocity, float m, bool isFixed);
 	void addSpring(int masspoint1, int masspoint2, float initialLength);
+	void addSpring(int masspoint1, int masspoint2, float stiff, float initialLength);
 	int getNumberOfMassPoints();
 	int getNumberOfSprings();
 	Vec3 getPositionOfMassPoint(int index);
 	Vec3 getVelocityOfMassPoint(int index);
 	void applyExternalForce(Vec3 force);
 	void initDemo1();
-	void AdvanceEuler();
-	void AdvanceLeapFrog();
-	void AdvanceMidPoint();
-	void drawMassSpring();
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
 		m_iIntegrator = integrator;
 	}
 
-	// Specific Functions
-	void drawSomeRandomObjects();
-	void drawMovableTeapot();
-	void drawTriangle();
+	// Single step simulation
+	void AdvanceEuler();
+	void AdvanceLeapFrog();
+	void AdvanceMidPoint();
+
+	// Drawing Functions
+	void drawMassSpring();
 
 private:
+	// UI Attributes
+	Vec3 m_externalForce;
+	Point2D m_mouse;
+	Point2D m_trackmouse;
+	Point2D m_oldtrackmouse;
+
 	// Data Attributes
 	float m_fMass;
 	float m_fStiffness;
 	float m_fDamping;
 	int m_iIntegrator;
-
-	// UI Attributes
-	int m_iAlgCase;
-	Vec3 m_externalForce;
-	Point2D m_mouse;
-	Point2D m_trackmouse;
-	Point2D m_oldtrackmouse;
 
 	// Attributes
 	Vec3 m_vfMovableObjectPos;

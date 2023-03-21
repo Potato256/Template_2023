@@ -13,8 +13,7 @@ MassSpringSystemSimulator::MassSpringSystemSimulator()
 	case 2:break;
 	default:break;
 	}
-
-	m_iAlgCase = 0;
+	setIntegrator(EULER);
 	m_vfMovableObjectPos = Vec3();
 	m_vfMovableObjectFinalPos = Vec3();
 	m_pointScale = Vec3(0.02f, 0.02f, 0.02f); 
@@ -25,7 +24,7 @@ MassSpringSystemSimulator::MassSpringSystemSimulator()
 }
 
 const char* MassSpringSystemSimulator::getTestCasesStr() {
-	return "demo1,demo2,demo3,demo4";
+	return "demo1,demo4";
 }
 
 const char* MassSpringSystemSimulator::getAlgCasesStr() {
@@ -36,7 +35,7 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 {
 	this->DUC = DUC;
 	TwType TW_TYPE_TESTCASE = TwDefineEnumFromString("Algorithm", getAlgCasesStr());
-	TwAddVarRW(DUC->g_pTweakBar, "Algorithm", TW_TYPE_TESTCASE, &m_iAlgCase, "");
+	TwAddVarRW(DUC->g_pTweakBar, "Algorithm", TW_TYPE_TESTCASE, &m_iIntegrator, "");
 
 	switch (m_iTestCase)
 	{
@@ -57,7 +56,6 @@ void MassSpringSystemSimulator::reset() {
 		initDemo1();
 		break;
 	case 1:break;
-	case 2:break;
 	default:break;
 	}
 
@@ -71,7 +69,6 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
 		drawMassSpring();
 		break;
 	case 1: break;
-	case 2: break;
 	}
 }
 
@@ -84,10 +81,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 		cout << "demo1\n";
 		break;
 	case 1:
-		cout << "1!\n";
-		break;
-	case 2:
-		cout << "2 !\n";
+		cout << "demo4\n";
 		break;
 	default:
 		cout << "Empty Test!\n";
@@ -120,9 +114,13 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
 	// update current setup for each frame
-	switch (m_iTestCase)
-	{// handling different cases
-	case 0:
+	switch (m_iIntegrator)
+	{
+	case EULER:
+		break;
+	case LEAPFROG:
+		break;
+	case MIDPOINT:
 		break;
 	default:
 		break;
@@ -158,16 +156,61 @@ void MassSpringSystemSimulator::setDampingFactor(float damping)
 	m_fDamping = damping;
 }
 
+int MassSpringSystemSimulator::addMassPoint(Vec3 position, Vec3 Velocity, bool isFixed) {
+	points.push_back(Point(position, Velocity, m_fMass, isFixed));
+	return points.size() - 1;
+}
+
+int MassSpringSystemSimulator::addMassPoint(Vec3 position, Vec3 Velocity, float m, bool isFixed) {
+	points.push_back(Point(position, Velocity, m, isFixed));
+	return points.size() - 1;
+}
+
+void MassSpringSystemSimulator::addSpring(int masspoint1, int masspoint2, float initialLength)
+{
+	springs.push_back(Spring(masspoint1, masspoint2, m_fStiffness, initialLength));
+}
+
+void MassSpringSystemSimulator::addSpring(int masspoint1, int masspoint2, float stiff, float initialLength)
+{
+	springs.push_back(Spring(masspoint1, masspoint2, stiff, initialLength));
+}
+
+int MassSpringSystemSimulator::getNumberOfMassPoints()
+{
+	return points.size();
+}
+int MassSpringSystemSimulator::getNumberOfSprings()
+{
+	return springs.size();
+}
+
+Vec3 MassSpringSystemSimulator::getPositionOfMassPoint(int index)
+{
+	assert(index < points.size() - 1);
+	return points[index].position;
+}
+
+Vec3 MassSpringSystemSimulator::getVelocityOfMassPoint(int index)
+{
+	assert(index < points.size() - 1);
+	return points[index].velocity;
+}
+
+void MassSpringSystemSimulator::applyExternalForce(Vec3 force)
+{
+	m_externalForce = force;
+}
+
 void MassSpringSystemSimulator::initDemo1()
 {
 	points.clear();
 	springs.clear();
-	// point 0
-	points.push_back(Point(Vec3(0, 0, 0), Vec3(-1, 0, 0), 10));
-	// point 1
-	points.push_back(Point(Vec3(0, 2, 0), Vec3(1, 0, 0), 10));
-	// spring 0
-	springs.push_back(Spring(0, 1, 40, 1));
+	setMass(10.f);
+	setStiffness(40.f);
+	int p0 = addMassPoint(Vec3(0, 0, 0), Vec3(-1, 0, 0), 0);
+	int p1 = addMassPoint(Vec3(0, 2, 0), Vec3(1, 0, 0), 0);
+	addSpring(p0, p1, 1.f);
 }
 
 void MassSpringSystemSimulator::drawMassSpring()
