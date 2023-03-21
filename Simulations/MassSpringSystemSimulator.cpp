@@ -3,24 +3,14 @@
 MassSpringSystemSimulator::MassSpringSystemSimulator()
 {
 	// Initialization
-	m_iTestCase = 0; 
-	switch (m_iTestCase)
-	{
-	case 0:
-		initDemo1(); 
-		break;
-	case 1:break;
-	case 2:break;
-	default:break;
-	}
+	m_iTestCase = 0;
 	setIntegrator(EULER);
 	m_vfMovableObjectPos = Vec3();
 	m_vfMovableObjectFinalPos = Vec3();
 	m_pointScale = Vec3(0.02f, 0.02f, 0.02f); 
 	m_lineColor = Vec3(1.0f, 0.1f, 0.6f);
 	points = std::vector<Point>();
-	springs= std::vector<Spring>();
-
+	springs = std::vector<Spring>();
 }
 
 const char* MassSpringSystemSimulator::getTestCasesStr() {
@@ -41,7 +31,6 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 	{
 	case 0:break;
 	case 1:break;
-	case 2:break;
 	default:break;
 	}
 }
@@ -63,13 +52,7 @@ void MassSpringSystemSimulator::reset() {
 
 void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
 {
-	switch (m_iTestCase)
-	{
-	case 0:
-		drawMassSpring();
-		break;
-	case 1: break;
-	}
+	drawMassSpring();
 }
 
 void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
@@ -78,6 +61,8 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 	switch (m_iTestCase)
 	{
 	case 0:
+		initDemo1();
+		m_vfMovableObjectPos = Vec3(0, 0, 0);
 		cout << "demo1\n";
 		break;
 	case 1:
@@ -130,20 +115,28 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 	}
 }
 
-
 void MassSpringSystemSimulator::integratePositions(float timeStep)
 {
 	for (auto& p : points)
-	{
 		p.integratePosition(timeStep);
-	}
 }
+
 void MassSpringSystemSimulator::integrateVelocity(float timeStep)
 {
 	for (auto& p : points)
-	{
 		p.integrateVelocity(timeStep);
-	}
+}
+
+void MassSpringSystemSimulator::integratePositions(float timeStep, std::vector<Point>& ps)
+{
+	for (auto& p : ps)
+		p.integratePosition(timeStep);
+}
+
+void MassSpringSystemSimulator::integrateVelocity(float timeStep, std::vector<Point>& ps)
+{
+	for (auto& p : ps)
+		p.integrateVelocity(timeStep);
 }
 
 void MassSpringSystemSimulator::AdvanceEuler(float timeStep)
@@ -170,7 +163,40 @@ void MassSpringSystemSimulator::AdvanceLeapFrog(float timeStep)
 
 void MassSpringSystemSimulator::AdvanceMidPoint(float timeStep)
 {
+	std::vector<Point> midPoints(points);
 
+	for (auto& p : midPoints)
+	{
+		p.clearForce();
+		p.addGravity(m_externalForce);
+	}
+
+	for (auto& s : springs)
+	{
+		s.computeElasticForces(midPoints);
+		s.addToEndPoints(midPoints);
+	}
+
+	integratePositions(0.5 * timeStep, midPoints);
+	integrateVelocity(0.5 * timeStep, midPoints);
+
+	for (auto& p : points)
+	{
+		p.clearForce();
+		p.addGravity(m_externalForce);
+	}
+
+	for (auto& s : springs)
+	{
+		s.computeElasticForces(midPoints);
+		s.addToEndPoints(points);
+	}
+
+	int size = getNumberOfMassPoints();
+	for (int i = 0; i < size; ++i)
+		points[i].position += timeStep * midPoints[i].velocity;
+
+	integrateVelocity(timeStep);
 }
 
 
@@ -272,6 +298,29 @@ Vec3 MassSpringSystemSimulator::getVelocityOfMassPoint(int index)
 	return points[index].velocity;
 }
 
+void MassSpringSystemSimulator::printPositionOfMassPoint(int index)
+{
+	assert(index < points.size());
+	std::cout<< points[index].position << std::endl;
+}
+
+void MassSpringSystemSimulator::printVelocityOfMassPoint(int index)
+{
+	assert(index < points.size());
+	std::cout << points[index].velocity << std::endl;
+}
+
+void MassSpringSystemSimulator::printSpring(int index)
+{
+	assert(index < springs.size());
+	std::cout << "p1 : " << springs[index].point1 << "    p2 : " << springs[index].point2 
+		<< "    l : " << springs[index].initialLength << "    k : " << springs[index].stiffness << std::endl;
+}
+
+void MassSpringSystemSimulator::newline()
+{
+	std::cout << std::endl;
+}
 void MassSpringSystemSimulator::applyExternalForce(Vec3 force)
 {
 	m_externalForce = force;

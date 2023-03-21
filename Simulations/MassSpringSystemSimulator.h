@@ -71,6 +71,8 @@ public:
 	void applyExternalForce(Vec3 force);
 	void integratePositions(float timeStep);
 	void integrateVelocity(float timeStep);
+	void integratePositions(float timeStep, std::vector<Point>& ps);
+	void integrateVelocity(float timeStep, std::vector<Point>& ps);
 
 	// Single step simulation
 	void AdvanceEuler(float timeStep);
@@ -89,6 +91,10 @@ public:
 	int getNumberOfSprings();
 	Vec3 getPositionOfMassPoint(int index);
 	Vec3 getVelocityOfMassPoint(int index);
+	void printPositionOfMassPoint(int index);
+	void printVelocityOfMassPoint(int index);
+	void printSpring(int index);
+	void newline();
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
