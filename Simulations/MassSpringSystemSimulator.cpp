@@ -117,14 +117,89 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 	switch (m_iIntegrator)
 	{
 	case EULER:
+		AdvanceEuler(timeStep);
 		break;
 	case LEAPFROG:
+		AdvanceLeapFrog(timeStep);
 		break;
 	case MIDPOINT:
+		AdvanceMidPoint(timeStep);
 		break;
 	default:
 		break;
 	}
+}
+
+
+void MassSpringSystemSimulator::integratePositions(float timeStep)
+{
+	for (auto& p : points)
+	{
+		p.integratePosition(timeStep);
+	}
+}
+void MassSpringSystemSimulator::integrateVelocity(float timeStep)
+{
+	for (auto& p : points)
+	{
+		p.integrateVelocity(timeStep);
+	}
+}
+
+void MassSpringSystemSimulator::AdvanceEuler(float timeStep)
+{
+	for (auto& p : points)
+	{
+		p.clearForce();
+		p.addGravity(m_externalForce);
+	}
+	for (auto& s : springs)
+	{
+		s.computeElasticForces(points);
+		s.addToEndPoints(points);
+	}
+
+	integratePositions(timeStep);
+	integrateVelocity(timeStep);
+}
+
+void MassSpringSystemSimulator::AdvanceLeapFrog(float timeStep)
+{
+
+}
+
+void MassSpringSystemSimulator::AdvanceMidPoint(float timeStep)
+{
+
+}
+
+
+void MassSpringSystemSimulator::initDemo1()
+{
+	points.clear();
+	springs.clear();
+	setMass(10.f);
+	setStiffness(40.f);
+	int p0 = addMassPoint(Vec3(0, 0, 0), Vec3(-1, 0, 0), 0);
+	int p1 = addMassPoint(Vec3(0, 2, 0), Vec3(1, 0, 0), 0);
+	addSpring(p0, p1, 1.f);
+}
+
+void MassSpringSystemSimulator::drawMassSpring()
+{
+	// draw points with spheres
+	DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 0.8, 0.8), 100, 0.6 * Vec3(0.97, 0.86, 1));
+
+	for (auto& p : points)
+		DUC->drawSphere(p.position + m_vfMovableObjectPos, m_pointScale);
+	DUC->beginLine();
+	for (auto& s : springs)
+		DUC->drawLine(points[s.point1].position + m_vfMovableObjectPos,
+			m_lineColor,
+			points[s.point2].position + m_vfMovableObjectPos,
+			m_lineColor
+		);
+	DUC->endLine();
 }
 
 void MassSpringSystemSimulator::onClick(int x, int y)
@@ -187,13 +262,13 @@ int MassSpringSystemSimulator::getNumberOfSprings()
 
 Vec3 MassSpringSystemSimulator::getPositionOfMassPoint(int index)
 {
-	assert(index < points.size() - 1);
+	assert(index < points.size());
 	return points[index].position;
 }
 
 Vec3 MassSpringSystemSimulator::getVelocityOfMassPoint(int index)
 {
-	assert(index < points.size() - 1);
+	assert(index < points.size());
 	return points[index].velocity;
 }
 
@@ -202,32 +277,4 @@ void MassSpringSystemSimulator::applyExternalForce(Vec3 force)
 	m_externalForce = force;
 }
 
-void MassSpringSystemSimulator::initDemo1()
-{
-	points.clear();
-	springs.clear();
-	setMass(10.f);
-	setStiffness(40.f);
-	int p0 = addMassPoint(Vec3(0, 0, 0), Vec3(-1, 0, 0), 0);
-	int p1 = addMassPoint(Vec3(0, 2, 0), Vec3(1, 0, 0), 0);
-	addSpring(p0, p1, 1.f);
-}
-
-void MassSpringSystemSimulator::drawMassSpring()
-{
-	// draw points with spheres
-	DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 0.8, 0.8), 100, 0.6 * Vec3(0.97, 0.86, 1));
-
-	for (auto& p : points)
-		DUC->drawSphere(p.position + m_vfMovableObjectPos, m_pointScale);
-	DUC->beginLine();
-	for (auto& s : springs)
-		DUC->drawLine(points[s.point1].position + m_vfMovableObjectPos,
-			m_lineColor,
-			points[s.point2].position + m_vfMovableObjectPos,
-			m_lineColor
-		);
-	DUC->endLine();
-
-}
 

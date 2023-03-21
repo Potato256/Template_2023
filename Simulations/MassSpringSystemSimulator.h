@@ -8,17 +8,6 @@
 #define MIDPOINT 2
 // Do Not Change
 
-class Spring {
-public:
-	Spring(int p1, int p2, float stiff, float initLen): 
-		point1(p1), point2(p2), stiffness(stiff), initialLength(initLen), currentLength(0) {}
-	int point1;
-	int point2;
-	float stiffness;
-	float initialLength;
-	float currentLength;
-};
-
 class Point {
 public:
 	Point(Vec3 p, Vec3 v, float m, bool fix): 
@@ -28,6 +17,36 @@ public:
 	Vec3 force;
 	float mass;
 	bool fixed;
+
+	void clearForce() { force = Vec3(0, 0, 0); }
+	void addGravity(Vec3 g) { force += g; }
+	void integratePosition(float timeStep) { position += fixed? Vec3(0,0,0) : timeStep * velocity; };
+	void integrateVelocity(float timeStep) { velocity += timeStep * force / mass; };
+};
+
+class Spring {
+public:
+	Spring(int p1, int p2, float stiff, float initLen) :
+		point1(p1), point2(p2), stiffness(stiff), initialLength(initLen), currentLength(0), f(Vec3(0, 0, 0)) {}
+	int point1;
+	int point2;
+	float stiffness;
+	float initialLength;
+private:
+	float currentLength;
+	// the direction of force is p2 - p1
+	Vec3 f;
+
+public:
+	void computeElasticForces(std::vector<Point>& points) {
+	    f = points[point2].position - points[point1].position;
+		currentLength = std::sqrt(f[0]*f[0]+ f[1] * f[1]+ f[2] * f[2]);
+		f = (currentLength - initialLength) * stiffness * f / currentLength;
+	};
+	void addToEndPoints(std::vector<Point>& points) {
+		points[point1].force += f;
+		points[point2].force -= f;
+	};
 };
 
 class MassSpringSystemSimulator:public Simulator{
@@ -48,6 +67,17 @@ public:
 	void onMouse(int x, int y);
 
 	// Specific Functions
+	void initDemo1();
+	void applyExternalForce(Vec3 force);
+	void integratePositions(float timeStep);
+	void integrateVelocity(float timeStep);
+
+	// Single step simulation
+	void AdvanceEuler(float timeStep);
+	void AdvanceLeapFrog(float timeStep);
+	void AdvanceMidPoint(float timeStep);
+
+	// Interfaces
 	void setMass(float mass);
 	void setStiffness(float stiffness);
 	void setDampingFactor(float damping);
@@ -59,20 +89,13 @@ public:
 	int getNumberOfSprings();
 	Vec3 getPositionOfMassPoint(int index);
 	Vec3 getVelocityOfMassPoint(int index);
-	void applyExternalForce(Vec3 force);
-	void initDemo1();
 	
 	// Do Not Change
 	void setIntegrator(int integrator) {
 		m_iIntegrator = integrator;
 	}
 
-	// Single step simulation
-	void AdvanceEuler();
-	void AdvanceLeapFrog();
-	void AdvanceMidPoint();
-
-	// Drawing Functions
+	// Rendering
 	void drawMassSpring();
 
 private:
