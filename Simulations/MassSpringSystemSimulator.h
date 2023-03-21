@@ -19,7 +19,7 @@ public:
 	bool fixed;
 
 	void clearForce() { force = Vec3(0, 0, 0); }
-	void addGravity(Vec3 g) { force += g; }
+	void addGravity(float g) { force += g * mass * Vec3(0,-1,0); }
 	void integratePosition(float timeStep) { position += fixed? Vec3(0,0,0) : timeStep * velocity; };
 	void integrateVelocity(float timeStep) { velocity += timeStep * force / mass; };
 };
@@ -68,11 +68,13 @@ public:
 
 	// Specific Functions
 	void initDemo1();
+	void initDemo4();
 	void applyExternalForce(Vec3 force);
 	void integratePositions(float timeStep);
 	void integrateVelocity(float timeStep);
 	void integratePositions(float timeStep, std::vector<Point>& ps);
 	void integrateVelocity(float timeStep, std::vector<Point>& ps);
+	void checkBoundary();
 
 	// Single step simulation
 	void AdvanceEuler(float timeStep);
@@ -83,6 +85,7 @@ public:
 	void setMass(float mass);
 	void setStiffness(float stiffness);
 	void setDampingFactor(float damping);
+	void setGravity(float g);
 	int addMassPoint(Vec3 position, Vec3 Velocity, bool isFixed);
 	int addMassPoint(Vec3 position, Vec3 Velocity, float m, bool isFixed);
 	void addSpring(int masspoint1, int masspoint2, float initialLength);
@@ -115,7 +118,9 @@ private:
 	float m_fMass;
 	float m_fStiffness;
 	float m_fDamping;
+	float m_fGravity;
 	int m_iIntegrator;
+	bool floor_boundary;
 
 	// Attributes
 	Vec3 m_vfMovableObjectPos;
