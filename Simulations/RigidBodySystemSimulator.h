@@ -73,11 +73,11 @@ public:
 		Mat4d rot_T = rot;
 		rot_T.transpose();
 		for (auto& f : forces) {
-			torque += cross(f.loc - center, f.f);
+			torque += cross((f.loc - center), f.f);
 		}
 		Mat4 inertia_tensor_real = rot * inertia_tensor * rot_T;
 		angular_velocity += dt * inertia_tensor_real.inverse().transformVector(torque);
-		//	std::cout << angular_velocity << std::endl;
+		// std::cout << angular_velocity << std::endl;
 	}
 
 };
@@ -107,11 +107,13 @@ public:
 	void addRigidBody(Vec3 position, Vec3 size, int mass);
 	void setOrientationOf(int i,Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
+	void detectCollision();
 
 	void setControlledRot(int i);
 	void getControlledRot(int i);
 
 	void initDemo1();
+	void initDemo2();
 
 private:
 	// Attributes

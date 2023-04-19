@@ -1,21 +1,24 @@
 ﻿#include "RigidBodySystemSimulator.h" 
+#include "collisionDetect.h"
 
 RigidBodySystemSimulator::RigidBodySystemSimulator() {
 	m_iTestCase = 0;
 }
 
 const char* RigidBodySystemSimulator::getTestCasesStr() {
-	return "demo1";
+	return "demo1,demo2";
 }
 
 void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 {
 	this->DUC = DUC;
+	TwAddVarRW(DUC->g_pTweakBar, "ObjRotation", TW_TYPE_QUAT4F,
+		&ControlledRot, " label='Object rotation' opened=true help='Change the object orientation.' axisz=-z");
+
 	switch (m_iTestCase)
 	{
 	case 0:
-		TwAddVarRW(DUC->g_pTweakBar, "ObjRotation", TW_TYPE_QUAT4F, 
-			&ControlledRot, " label='Object rotation' opened=true help='Change the object orientation.' axisz=-z");
+	
 		break;
 	default:break;
 	}
@@ -48,6 +51,11 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 		initDemo1();
 		cout << "demo1\n";
 		break;
+	case 1:
+		initDemo2();
+		cout << "demo2\n";
+		break;
+
 	default:
 		cout << "Empty Test!\n";
 		break;
@@ -56,7 +64,23 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 
 void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed) 
 {
-
+	if (m_iTestCase < 1) {
+		Point2D mouseDiff;
+		mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
+		mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
+		if (mouseDiff.x != 0 || mouseDiff.y != 0)
+		{
+			Mat4 worldViewInv = Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
+			worldViewInv = worldViewInv.inverse();
+			Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
+			Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
+			// find a proper scale!
+			float inputScale = 20.f;
+			inputWorld = inputWorld * inputScale * timeElapsed;
+			//	std::cout << inputWorld << std::endl;
+			applyForceOnBody(0, rigid_boxes[0].center + 0.5 * rigid_boxes[0].size, inputWorld);
+		}
+	}
 }
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
@@ -69,7 +93,40 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 		rb.update_angular_velocity(timeStep);
 		rb.clearForce();
 	}
+	detectCollision();
 	setControlledRot(0);
+}
+
+void RigidBodySystemSimulator::detectCollision() 
+{
+	for (int i = 0; i < rigid_boxes.size(); i++) {
+		for (int j = i + 1; j < rigid_boxes.size(); j++) {
+			CollisionInfo info = checkCollisionSAT(rigid_boxes[i].get_objToWorld(),
+				rigid_boxes[j].get_objToWorld());
+			if (!info.isValid)
+				continue;
+			Vec3 v_rel = rigid_boxes[i].linear_velocity - rigid_boxes[j].linear_velocity;
+			if (dot(v_rel, info.normalWorld) > 0)
+				continue;
+			float c = 1;
+			float J = -(1 + c) * dot(v_rel, info.normalWorld) /
+				(1 / rigid_boxes[i].mass + 1 / rigid_boxes[j].mass + dot(
+					cross(rigid_boxes[i].inertia_tensor.inverse().transformVector(cross(info.collisionPointWorld - rigid_boxes[i].center, info.normalWorld)), info.collisionPointWorld - rigid_boxes[i].center) +
+					cross(rigid_boxes[j].inertia_tensor.inverse().transformVector(cross(info.collisionPointWorld - rigid_boxes[j].center, info.normalWorld)), info.collisionPointWorld - rigid_boxes[j].center),
+					info.normalWorld));
+			if (!rigid_boxes[i].fixed)
+			{
+				rigid_boxes[i].linear_velocity += J * info.normalWorld / rigid_boxes[i].mass;
+				rigid_boxes[i].angular_velocity += cross(info.collisionPointWorld - rigid_boxes[i].center, J * info.normalWorld);
+			}
+			if (!rigid_boxes[j].fixed)
+			{
+				rigid_boxes[j].linear_velocity -= J * info.normalWorld / rigid_boxes[j].mass;
+				rigid_boxes[j].angular_velocity -= cross(info.collisionPointWorld - rigid_boxes[j].center, J * info.normalWorld);
+			}
+		}
+	}
+		
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
@@ -143,6 +200,17 @@ void RigidBodySystemSimulator::initDemo1()
 	setControlledRot(0);
 
 	simulateTimestep(2.0);
+}
+void RigidBodySystemSimulator::initDemo2()
+{
+	rigid_boxes.clear();
+	// Add a rigid body
+	addRigidBody(Vec3(-0.1f, -0.2f, 0.1f), Vec3(0.4f, 0.2f, 0.2f), 100.0f);
+	addRigidBody(Vec3(0.0f, 0.2f, 0.0f), Vec3(0.4f, 0.2f, 0.2f), 100.0);
+	setOrientationOf(1, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.25f));
+	setVelocityOf(1, Vec3(0.0f, -0.1f, 0.05f));
+	setControlledRot(0);
+
 }
 
 void RigidBodySystemSimulator::setControlledRot(int i) {
