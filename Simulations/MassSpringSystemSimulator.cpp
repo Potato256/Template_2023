@@ -289,7 +289,6 @@ void MassSpringSystemSimulator::initDemo4()
 	addSpring(p[5], p[7], 0.4243);
 	addSpring(p[6], p[8], 0.4243);
 
-
 	setStiffness(80.f);
 	//addSpring(p[7], p[9], 0.3);
 
