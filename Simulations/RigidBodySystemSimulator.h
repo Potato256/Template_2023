@@ -37,9 +37,22 @@ public:
 		tmp.initTranslation(center.x, center.y, center.z);
 		objToWorld = objToWorld * tmp;
 		return objToWorld;
-
 	}
 
+	void update_position(float dt) {
+		center += linear_velocity * dt;
+	}
+
+	void update_rotation(float dt) {
+		Quat q = Quat(angular_velocity.x, angular_velocity.y, angular_velocity.z, 0) * rotation;
+		rotation = rotation + q * (0.5f * dt);
+		rotation.unit();
+	}
+
+	void update_velocity(float dt) {
+		linear_velocity = linear_velocity + (force / mass) * dt;
+		// rb.angular_velocity = rb.angular_velocity + (rb.torque / rb.mass) * timeStep;
+	}
 
 };
 
