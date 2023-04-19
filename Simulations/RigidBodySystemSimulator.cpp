@@ -63,10 +63,11 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
 	getControlledRot(0);
 	for (auto& rb : rigid_boxes) {
-		rb.angular_velocity = Vec3(1,1,1);
 		rb.update_position(timeStep);
 		rb.update_rotation(timeStep);
-		rb.update_velocity(timeStep);
+		rb.update_linear_velocity(timeStep);
+		rb.update_angular_velocity(timeStep);
+		rb.clearForce();
 	}
 	setControlledRot(0);
 }
@@ -110,7 +111,8 @@ Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i)
 
 void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 {
-	
+	assert(i < rigid_boxes.size());
+	rigid_boxes[i].apply_force(loc, force);
 }
 
 void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
@@ -135,11 +137,12 @@ void RigidBodySystemSimulator::initDemo1()
 {
 	rigid_boxes.clear();
 	// Add a rigid body
-	addRigidBody(Vec3(0, 0, 0), Vec3(1, 0.6, 0.5), 2);
-	setOrientationOf(0, Quat(Vec3(0, 0, 1), (float)(M_PI) * 0.5f));
+	addRigidBody(Vec3(0.0f, 0.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2.0f);
+	setOrientationOf(0, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.5f));
+	applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, 0.0f));
 	setControlledRot(0);
-	applyForceOnBody(0, Vec3(0.3, 0.5f, 0.25f), Vec3(1, 1, 0));
 
+	simulateTimestep(2.0);
 }
 
 void RigidBodySystemSimulator::setControlledRot(int i) {

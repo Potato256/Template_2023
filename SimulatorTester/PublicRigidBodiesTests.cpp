@@ -15,6 +15,7 @@ namespace SimulatorTester
 			rbss->addRigidBody(Vec3(0.0f, 0.2f, 0.0f), Vec3(0.4f, 0.2f, 0.2f), 100.0);
 			rbss->setOrientationOf(1, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI)*0.25f));
 			rbss->setVelocityOf(1,Vec3(0.0f, -0.1f, 0.05f));
+			rbss->setControlledRot(0);
 		}
 
 		TEST_METHOD(TestRigidBodiesInitialization)
@@ -79,6 +80,7 @@ namespace SimulatorTester
 			rbss->addRigidBody(Vec3(0.0f, 0.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2.0f);
 			rbss->setOrientationOf(0, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI)* 0.5f));
 			rbss->applyForceOnBody(0, Vec3(0.3f, 0.5f, 0.25f), Vec3(1.0f, 1.0f, 0.0f));
+			rbss->setControlledRot(0);
 			rbss->simulateTimestep(2.0);
 
 			Vec3 pos = rbss->getPositionOfRigidBody(0);

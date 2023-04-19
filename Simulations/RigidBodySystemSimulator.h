@@ -12,31 +12,43 @@ public:
 		rotation = Quat(0, 0, 0, 1);
 		linear_velocity = Vec3(0, 0, 0);
 		angular_velocity = Vec3(0, 0, 0);
-		force = Vec3(0, 0, 0);
 		fixed = false;
+
+		inertia_tensor.initScaling(size.y * size.y + size.z * size.z, size.x * size.x + size.z + size.z, size.x + size.x + size.y + size.y);
+		inertia_tensor = inertia_tensor / 12.0f * mass;
 	}
+
+	class Force {
+	public:
+		Force (Vec3 l, Vec3 f) : loc(l), f(f) {}
+		Vec3 loc;
+		Vec3 f;
+	};
 
 	Vec3 center;
 	Vec3 size;
 	Quat rotation;
+	Mat4d inertia_tensor;
 
-	Vec3 force;
+	std::vector<Force> forces;
 	Vec3 linear_velocity;
 	Vec3 angular_velocity;
 
 	float mass;
 	bool fixed;
-	void clearForce() { force = Vec3(0, 0, 0); }
+	
+	void clearForce() { forces.clear(); }
 
 	Mat4 get_objToWorld() {
-		Mat4 objToWorld, tmp;
-		objToWorld.initId();
-		tmp.initScaling(size.x, size.y, size.z);
-		objToWorld = objToWorld * tmp;
-		objToWorld = objToWorld * rotation.getRotMat();
-		tmp.initTranslation(center.x, center.y, center.z);
-		objToWorld = objToWorld * tmp;
-		return objToWorld;
+		Mat4 trans, rot, scale;
+		trans.initTranslation(center.x, center.y, center.z);
+		rot = rotation.getRotMat();
+		scale.initScaling(size.x, size.y, size.z);
+		return scale * rot * trans;
+	}
+
+	void apply_force(Vec3 loc, Vec3 force) {
+		forces.push_back(Force(loc, force));
 	}
 
 	void update_position(float dt) {
@@ -49,9 +61,23 @@ public:
 		rotation.unit();
 	}
 
-	void update_velocity(float dt) {
-		linear_velocity = linear_velocity + (force / mass) * dt;
-		// rb.angular_velocity = rb.angular_velocity + (rb.torque / rb.mass) * timeStep;
+	void update_linear_velocity(float dt) {
+		for (auto& f : forces) {
+			linear_velocity += f.f / mass * dt;
+		}
+	}
+
+	void update_angular_velocity(float dt) {
+		Vec3 torque = Vec3(0, 0, 0);
+		Mat4d rot = rotation.getRotMat();
+		Mat4d rot_T = rot;
+		rot_T.transpose();
+		for (auto& f : forces) {
+			torque += cross(f.loc - center, f.f);
+		}
+		Mat4 inertia_tensor_real = rot * inertia_tensor * rot_T;
+		angular_velocity += dt * inertia_tensor_real.inverse().transformVector(torque);
+		//	std::cout << angular_velocity << std::endl;
 	}
 
 };
@@ -100,7 +126,6 @@ private:
 
 
 	std::vector<RigidBox> rigid_boxes;
-	float angle;
 	DirectX::XMVECTOR ControlledRot;
 	};
 #endif
