@@ -135,8 +135,6 @@ public:
 
 		return res;
 	}
-	
-
 
 };
 template<class Scalar>

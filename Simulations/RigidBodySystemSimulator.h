@@ -28,6 +28,18 @@ public:
 	bool fixed;
 	void clearForce() { force = Vec3(0, 0, 0); }
 
+	Mat4 get_objToWorld() {
+		Mat4 objToWorld, tmp;
+		objToWorld.initId();
+		tmp.initScaling(size.x, size.y, size.z);
+		objToWorld = objToWorld * tmp;
+		objToWorld = objToWorld * rotation.getRotMat();
+		tmp.initTranslation(center.x, center.y, center.z);
+		objToWorld = objToWorld * tmp;
+		return objToWorld;
+
+	}
+
 
 };
 
@@ -57,6 +69,9 @@ public:
 	void setOrientationOf(int i,Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
 
+	void setControlledRot(int i);
+	void getControlledRot(int i);
+
 	void initDemo1();
 
 private:
@@ -72,6 +87,7 @@ private:
 
 
 	std::vector<RigidBox> rigid_boxes;
-
+	float angle;
+	DirectX::XMVECTOR ControlledRot;
 	};
 #endif

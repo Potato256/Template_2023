@@ -1,4 +1,4 @@
-#include "RigidBodySystemSimulator.h" 
+﻿#include "RigidBodySystemSimulator.h" 
 
 RigidBodySystemSimulator::RigidBodySystemSimulator() {
 	m_iTestCase = 0;
@@ -13,7 +13,10 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 	this->DUC = DUC;
 	switch (m_iTestCase)
 	{
-	case 0:break;
+	case 0:
+		TwAddVarRW(DUC->g_pTweakBar, "ObjRotation", TW_TYPE_QUAT4F, 
+			&ControlledRot, " label='Object rotation' opened=true help='Change the object orientation.' axisz=-z");
+		break;
 	default:break;
 	}
 }
@@ -29,10 +32,11 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
 
 	// Set up the lighting
 	DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 0.8, 0.8), 100, 0.6 * Vec3(0.97, 0.86, 1));
-	Mat4 a;
-	a.initId();
+
 	// Draw the rigid body
-	DUC->drawRigidBody(a);
+	for (auto& rb : rigid_boxes) {
+		DUC->drawRigidBody(rb.get_objToWorld());
+	}
 }
 
 void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
@@ -57,7 +61,7 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
-
+	getControlledRot(0);
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
@@ -122,6 +126,22 @@ void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
 
 void RigidBodySystemSimulator::initDemo1()
 {
+	rigid_boxes.clear();
 	// Add a rigid body
 	addRigidBody(Vec3(0, 0, 0), Vec3(1, 0.6, 0.5), 2);
+	setOrientationOf(0, Quat(Vec3(0, 0, 1), (float)(M_PI) * 0.5f));
+	setControlledRot(0);
+}
+
+void RigidBodySystemSimulator::setControlledRot(int i) {
+	Quat& q = rigid_boxes[i].rotation;
+	ControlledRot = XMVectorSet(q.x, q.y, q.z, q.w);
+}
+
+void RigidBodySystemSimulator::getControlledRot(int i) {
+	Quat& q = rigid_boxes[i].rotation;
+	q.x = XMVectorGetX(ControlledRot);
+	q.y = XMVectorGetY(ControlledRot);
+	q.z = XMVectorGetZ(ControlledRot);
+	q.w = XMVectorGetW(ControlledRot);
 }
