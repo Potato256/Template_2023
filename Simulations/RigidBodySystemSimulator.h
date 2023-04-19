@@ -114,12 +114,14 @@ public:
 
 	void initDemo1();
 	void initDemo2();
+	void initDemo3();
 
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
 	// RigidBodySystem * m_pRigidBodySystem; 
 	Vec3 m_externalForce;
+	Vec3 gravity;
 
 	// UI Attributes
 	Point2D m_mouse;

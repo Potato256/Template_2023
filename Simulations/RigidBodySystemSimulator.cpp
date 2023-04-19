@@ -3,10 +3,11 @@
 
 RigidBodySystemSimulator::RigidBodySystemSimulator() {
 	m_iTestCase = 0;
+	gravity = Vec3(0, 0, 0);
 }
 
 const char* RigidBodySystemSimulator::getTestCasesStr() {
-	return "demo1,demo2";
+	return "demo1,demo2,demo3";
 }
 
 void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
@@ -55,6 +56,10 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 		initDemo2();
 		cout << "demo2\n";
 		break;
+	case 2:
+		initDemo3();
+		cout << "demo3\n";
+		break;
 
 	default:
 		cout << "Empty Test!\n";
@@ -81,12 +86,15 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 			applyForceOnBody(0, rigid_boxes[0].center + 0.5 * rigid_boxes[0].size, inputWorld);
 		}
 	}
+	for (int i = 0; i < rigid_boxes.size(); ++i)
+		applyForceOnBody(i, rigid_boxes[i].center, gravity * rigid_boxes[i].mass);
 }
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
 	getControlledRot(0);
 	for (auto& rb : rigid_boxes) {
+		if (rb.fixed) continue;
 		rb.update_position(timeStep);
 		rb.update_rotation(timeStep);
 		rb.update_linear_velocity(timeStep);
@@ -193,6 +201,7 @@ void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity)
 void RigidBodySystemSimulator::initDemo1()
 {
 	rigid_boxes.clear();
+	gravity = Vec3(0, 0, 0);
 	// Add a rigid body
 	addRigidBody(Vec3(0.0f, 0.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2.0f);
 	setOrientationOf(0, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.5f));
@@ -204,6 +213,7 @@ void RigidBodySystemSimulator::initDemo1()
 void RigidBodySystemSimulator::initDemo2()
 {
 	rigid_boxes.clear();
+	gravity = Vec3(0, 0, 0);
 	// Add a rigid body
 	addRigidBody(Vec3(-0.1f, -0.2f, 0.1f), Vec3(0.4f, 0.2f, 0.2f), 100.0f);
 	addRigidBody(Vec3(0.0f, 0.2f, 0.0f), Vec3(0.4f, 0.2f, 0.2f), 100.0);
@@ -212,6 +222,26 @@ void RigidBodySystemSimulator::initDemo2()
 	setControlledRot(0);
 
 }
+void RigidBodySystemSimulator::initDemo3()
+{
+	rigid_boxes.clear();
+	gravity = Vec3(0, -0.3, 0);
+	// Add a rigid body
+	addRigidBody(Vec3(-0.1f, -0.2f, 0.1f), Vec3(0.1f, 0.1f, 0.1f), 100.0f);
+	addRigidBody(Vec3(0.0f, 0.2f, 0.0f), Vec3(0.2f, 0.1f, 0.1f), 100.0);
+	setOrientationOf(1, Quat(Vec3(0.0f, 0.0f, 1.0f), (float)(M_PI) * 0.25f));
+	addRigidBody(Vec3(0.0f, 0.4f, 0.0f), Vec3(0.1f, 0.1f, 0.2f), 100.0);
+	addRigidBody(Vec3(0.0f, 0.6f, 0.0f), Vec3(0.1f, 0.1f, 0.2f), 100.0);
+	setVelocityOf(1, Vec3(0.0f, -0.1f, 0.05f));
+	// floor
+	addRigidBody(Vec3(0.0f, -1.0f, 0.0f), Vec3(2.0f, 0.1f, 2.0f), 100.0f);
+	rigid_boxes[4].fixed = true;
+
+	setControlledRot(0);
+
+}
+
+
 
 void RigidBodySystemSimulator::setControlledRot(int i) {
 	Quat& q = rigid_boxes[i].rotation;
