@@ -255,3 +255,4 @@ void RigidBodySystemSimulator::getControlledRot(int i) {
 	q.z = XMVectorGetZ(ControlledRot);
 	q.w = XMVectorGetW(ControlledRot);
 }
+
